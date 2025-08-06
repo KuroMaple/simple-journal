@@ -1,24 +1,35 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { JournalEntry } from '@/types/entry'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabaseClient'
 
 
 export default  function EntryPage() {
   const params = useParams();
   const entryId = params.entryId;
-  // Fetch rquired entry from localStorage on initial render
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const entry = entries.find(e => e.id === entryId);
-  useEffect(() => {
-    const storedEntries = localStorage.getItem("journalEntries");
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-      console.log("Loaded Entries:", JSON.parse(storedEntries));
+  const [entry, setEntry] = useState<JournalEntry | null>(null)
+
+  const fetchEntry = async () => {
+    const { data, error } = await supabase
+      .from("entries")
+      .select("*")
+      .eq("id", entryId)
+      .single()
+
+    if (error) {
+      console.error("Error fetching entry:", error)
+      return
     }
-  }, []);
+
+    setEntry(data)
+  }
+
+  useEffect(() => {
+    if (entryId) fetchEntry()
+  }, [entryId])
 
   const title = entry?.title || "Entry Not Found";
   const content = entry?.content || "The requested journal entry does not exist.";

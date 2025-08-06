@@ -4,6 +4,7 @@ export type JournalEntry = {
   updatedAt: Date;
   title: string;
   content: string;
+  user_id?: string;
 };
 
 export type JournalEntries = JournalEntry[];

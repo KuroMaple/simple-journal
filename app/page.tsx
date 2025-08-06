@@ -1,42 +1,40 @@
 "use client";
 
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { supabase } from '@/lib/supabaseClient'
 import { JournalEntries } from '@/types/entry'
+import User from '@/types/user'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [entries, setEntries] = useState<JournalEntries>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const [user, setUser] = useState<User>({
+    id: "11111111-1111-1111-1111-111111111111",
+    name: 'Hassan'
+  })
 
 
 
-  const handleAddEntry = () => {
-    setEntries([...entries, { id: Date.now().toString(), createdAt: new Date(), updatedAt: new Date(), title, content }]);
-    // Optionally, you can also log the entries to the console
-    console.log("Current Entries:", [...entries, { title, content }]);
-    // Reset form fields
+  const handleAddEntry = async () => {
+    const { data, error } = await supabase.from('entries').insert({
+      title,
+      content,
+      user_id: user.id
+    })
+    
+    if (error) {
+      console.error("Failed to add entry: ", error)
+      return
+    }
+    
+    
     setTitle("");
     setContent("");
   };
-
-  // Fetch entries from localStorage on initial render
-  useEffect(() => {
-    const storedEntries = localStorage.getItem("journalEntries");
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-      console.log("Loaded Entries:", JSON.parse(storedEntries));
-    }
-    setHasHydrated(true);
-  }, []);
-
-  // Save entries to localStorage whenever they change
-  useEffect(() => {
-    if (hasHydrated) {
-      localStorage.setItem("journalEntries", JSON.stringify(entries));
-    }
-  }, [entries, hasHydrated]);
 
   // Render the form 
   return (
@@ -49,27 +47,27 @@ export default function Home() {
         }}
         className="flex w-full flex-col gap-2"
       >
-      <input 
+      <Input 
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         type="text" 
         className="border border-gray-300 rounded-md p-2 w-full" 
         placeholder="Entry Title" />
-      <textarea 
+      <Textarea 
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className="border border-gray-300 rounded-md p-2 w-full mt-2" 
-        placeholder="Entry Content" 
-        rows={10} />
+        placeholder="Entry Content" />
       <div className="flex justify-end w-full rounded-md">
 
       <Link href="/PastEntries">
-        <button className="bg-gray-200 hover:bg-gray-300 text-black rounded-md px-4 py-2 mt-4">
+        
+        <Button className="px-4 py-2 mt-4" variant={'outline'}>
           View Past Entries
-        </button>
+        </Button>
       </Link>
 
-        <button className="bg-blue-500 text-white rounded-md px-4 py-2 mt-2 hover:bg-blue-600 transition-transform duration-200 active:scale-95">Add Entry</button>
+        <Button className="bg-blue-500 text-white rounded-md px-4 py-2 mt-2 hover:bg-blue-600 transition-transform duration-200 active:scale-95">Add Entry</Button>
       </div>
       </form>  
     </div>

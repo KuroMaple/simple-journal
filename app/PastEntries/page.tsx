@@ -1,19 +1,33 @@
 "use client";
+import { supabase } from '@/lib/supabaseClient'
 import { JournalEntries } from '@/types/entry'
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
 
 export default function PastEntries() {
 
-  const [entries, setEntries] = useState<JournalEntries>([]);
-  // Fetch entries from localStorage on initial render
-  useEffect(() => {
-    const storedEntries = localStorage.getItem("journalEntries");
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-      console.log("Loaded Entries:", JSON.parse(storedEntries));
+  const [entries, setEntries] = useState<JournalEntries>();
+  
+  const fetchEntries = async () => {
+    const { data, error } = await supabase
+      .from("entries")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching entries:", error);
+      return;
     }
-  }, []);
+
+    if (data) {
+      setEntries(data);
+    }
+  }
+
+  useEffect(() => {
+    fetchEntries()
+  }, [])
+  
   // Render the past entries
   return (
     <div className="align-center flex w-full max-w-md flex-col items-center justify-center px-4">
@@ -26,7 +40,7 @@ export default function PastEntries() {
         <h1 className="text-3xl font-bold underline pb-8">Past Journal Entries</h1>
       </div>
       
-      {entries.length > 0 ? (
+      {entries && entries.length > 0 ? (
         <ul className="w-full">
           {entries.map((entry) => (
               <li key={entry.id} className="border-b border-gray-300 py-2">
